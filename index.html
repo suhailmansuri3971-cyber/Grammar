@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AllCompetitionClasses - Grammar Live Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0c29;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #1a1a2e, #16213e);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #e94560;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            color: #e94560;
+        }
+
+        .header p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .container {
+            padding: 10px;
+            max-width: 100%;
+        }
+
+        /* Video Player */
+        .player-box {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(233, 69, 96, 0.2);
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        video {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .now-playing {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #e94560;
+        }
+
+        .now-playing h3 {
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .now-playing p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-red {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-dark {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Playlist */
+        .playlist-box {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .playlist-header {
+            padding: 8px;
+            background: rgba(233, 69, 96, 0.15);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .playlist-header h2 {
+            font-size: 0.9rem;
+            color: #e94560;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 12px;
+            margin-top: 8px;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 0.8rem;
+        }
+
+        .video-list {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .video-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .video-item:active {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+        }
+
+        .video-item.active {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+        }
+
+        .v-num {
+            width: 28px;
+            height: 28px;
+            background: rgba(233, 69, 96, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #e94560;
+            flex-shrink: 0;
+        }
+
+        .v-title {
+            flex: 1;
+            font-size: 0.8rem;
+            color: #fff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .v-play {
+            width: 24px;
+            height: 24px;
+            background: rgba(233, 69, 96, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .status-msg {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            display: none;
+        }
+
+        .status-msg.show { display: block; }
+        .status-msg.ok { background: rgba(0,255,0,0.1); color: #4ade80; }
+        .status-msg.err { background: rgba(255,0,0,0.1); color: #f87171; }
+        .status-msg.load { background: rgba(255,193,7,0.1); color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 AllCompetitionClasses</h1>
+        <p>Grammar Course - 158 Videos | Live Streaming</p>
+    </div>
+
+    <div class="container">
+        <!-- Player -->
+        <div class="player-box">
+            <div class="video-wrapper">
+                <video id="player" controls playsinline></video>
+            </div>
+            <div class="now-playing" id="nowPlaying">
+                <h3>🎬 Select a video to play</h3>
+                <p>Tap any video from the list below</p>
+            </div>
+            <div class="controls">
+                <button class="btn btn-red" onclick="stopVideo()">⏹ Stop</button>
+                <button class="btn btn-dark" onclick="fullScreen()">⛶ Full</button>
+            </div>
+            <div id="status" class="status-msg"></div>
+        </div>
+
+        <!-- Playlist -->
+        <div class="playlist-box">
+            <div class="playlist-header">
+                <h2>📋 Video Playlist (158)</h2>
+                <input type="text" class="search-box" id="searchInput" 
+                       placeholder="🔍 Search video..." onkeyup="doSearch()">
+            </div>
+            <div class="video-list" id="videoList">
+                <!-- Videos inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Video data - all 158 grammar videos
+        const videoData = [
+            {id:1, title:"Syllabus Discussion Video 1", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_40_NS_ENG_P1_9JUNE23.mp4/playlist.m3u8"},
+            {id:2, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 01 Video 2", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_13JULY23.mp4/playlist.m3u8"},
+            {id:3, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 02 Video 3", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_15JULY23.mp4/playlist.m3u8"},
+            {id:4, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 03 Part 1 Video 4", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_18JULY23.mp4/playlist.m3u8"},
+            {id:5, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 03 Part 2 Video 5", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_18JULY23.mp4/playlist.m3u8"},
+            {id:6, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 04 Video 6", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_20JULY23.mp4/playlist.m3u8"},
+            {id:7, title:"Topic Noun Class 05 Part 01 Video 7", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_22JULY23.mp4/playlist.m3u8"},
+            {id:8, title:"Topic Noun Class 05 Part 02 Video 8", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_22JULY23.mp4/playlist.m3u8"},
+            {id:9, title:"Topic Noun Class 06 Video 9", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_25JULY23.mp4/playlist.m3u8"},
+            {id:10, title:"Topic Noun Class 07 Video 10", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_27JULY23.mp4/playlist.m3u8"},
+            {id:11, title:"Topic Noun Class 08 Part 1 Video 11", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_29JULY23.mp4/playlist.m3u8"},
+            {id:12, title:"Topic Noun Class 08 Part 2 Video 12", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_29JULY23.mp4/playlist.m3u8"},
+            {id:13, title:"Topic Noun Class 09 Part 1 Video 13", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_1AUG23.mp4/playlist.m3u8"},
+            {id:14, title:"Topic Noun Class 09 Part 2 Video 14", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_1AUG23.mp4/playlist.m3u8"},
+            {id:15, title:"Topic Noun Class 10 Part 1 Video 15", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_3AUG23.mp4/playlist.m3u8"},
+            {id:16, title:"Topic Noun Class 10 Part 2 Video 16", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_3AUG23.mp4/playlist.m3u8"},
+            {id:17, title:"Topic Confusing Noun Class 11 Part 1 Video 17", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_5AUG23.mp4/playlist.m3u8"},
+            {id:18, title:"Topic Confusing Noun Class 11 Part 2 Video 18", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_5AUG23.mp4/playlist.m3u8"},
+            {id:19, title:"Topic Confusing Noun Class 12 Part 1 Video 19", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_8AUG23.mp4/playlist.m3u8"},
+            {id:20, title:"Topic Confusing Noun Class 12 Part 2 Video 20", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_8AUG23.mp4/playlist.m3u8"},
+            {id:21, title:"Topic Pronoun Class 13 Video 21", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_10AUG23.mp4/playlist.m3u8"},
+            {id:22, title:"Topic Pronoun Class 14 Video 22", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_12AUG23.mp4/playlist.m3u8"},
+            {id:23, title:"Topic Pronoun Class 15 Video 23", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_15AUG23.mp4/playlist.m3u8"},
+            {id:24, title:"Topic Pronoun Class 16 Video 24", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_17AUG23.mp4/playlist.m3u8"},
+            {id:25, title:"Topic Pronoun Class 17 Video 25", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_19AUG23.mp4/playlist.m3u8"},
+            {id:26, title:"Topic Adjective Class 18 Video 26", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_22AUG23.mp4/playlist.m3u8"},
+            {id:27, title:"Topic Adjective Class 19 Video 27", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_24AUG23.mp4/playlist.m3u8"},
+            {id:28, title:"Topic Adjective Class 20 Video 28", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_26AUG23.mp4/playlist.m3u8"},
+            {id:29, title:"Topic Adjective Class 21 Video 29", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_29AUG23.mp4/playlist.m3u8"},
+            {id:30, title:"Topic Adjective Class 22 Video 30", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_31AUG23.mp4/playlist.m3u8"},
+            {id:31, title:"Topic Adjective Class 23 Video 31", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_2SEP23.mp4/playlist.m3u8"},
+            {id:32, title:"Topic Adjective Class 24 Video 32", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_5SEP23.mp4/playlist.m3u8"},
+            {id:33, title:"Topic Adjective Class 25 Video 33", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_7SEP23.mp4/playlist.m3u8"},
+            {id:34, title:"Topic Adjective Class 26 Video 34", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_9SEP23.mp4/playlist.m3u8"},
+            {id:35, title:"Topic Adjective Class 27 Video 35", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_12SEP23.mp4/playlist.m3u8"},
+            {id:36, title:"Topic Adjective Class 28 Video 36", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_14SEP23.mp4/playlist.m3u8"},
+            {id:37, title:"Topic Adjective Class 29 Video 37", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_16SEP23.mp4/playlist.m3u8"},
+            {id:38, title:"Topic Adjective Class 30 Video 38", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_19SEP23.mp4/playlist.m3u8"},
+            {id:39, title:"Topic Adjective Class 31 Video 39", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_21SEP23.mp4/playlist.m3u8"},
+            {id:40, title:"Topic Adjective Class 32 Video 40", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_23SEP23.mp4/playlist.m3u8"},
+            {id:41, title:"Topic Adjective Class 33 Video 41", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_26SEP23.mp4/playlist.m3u8"},
+            {id:42, title:"Topic Adjective Class 34 Video 42", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_28SEP23.mp4/playlist.m3u8"},
+            {id:43, title:"Topic Verb Class 28 Video 43", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_15MAY23.mp4/playlist.m3u8"},
+            {id:44, title:"Topic Confusing Verb Class 29 Video 44", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_19MAY23.mp4/playlist.m3u8"},
+            {id:45, title:"Topic Verb Class 30 Video 45", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_22MAY23.mp4/playlist.m3u8"},
+            {id:46, title:"Topic Verb Class 31 Video 46", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_24MAY23.mp4/playlist.m3u8"},
+            {id:47, title:"Topic Verb Class 32 Video 47", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_26MAY23.mp4/playlist.m3u8"},
+            {id:48, title:"Topic Verb Class 33 Video 48", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_29MAY23.mp4/playlist.m3u8"},
+            {id:49, title:"Topic Verb Class 34 Video 49", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_31MAY23.mp4/playlist.m3u8"},
+            {id:50, title:"Topic Verb Class 35 Video 50", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_2JUNE23.mp4/playlist.m3u8"},
+            {id:51, title:"Topic Verb Class 36 Video 51", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_5JUNE23.mp4/playlist.m3u8"},
+            {id:52, title:"Topic Verb Class 37 Video 52", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_7JUNE23.mp4/playlist.m3u8"},
+            {id:53, title:"Topic Verb Class 38 Video 53", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_9JUNE23.mp4/playlist.m3u8"},
+            {id:54, title:"Topic Verb Class 39 Video 54", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_12JUNE23.mp4/playlist.m3u8"},
+            {id:55, title:"Topic Verb Class 40 Video 55", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_14JUNE23.mp4/playlist.m3u8"},
+            {id:56, title:"Topic Verb Class 41 Video 56", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_16JUNE23.mp4/playlist.m3u8"},
+            {id:57, title:"Topic Verb Class 42 Video 57", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_19JUNE23.mp4/playlist.m3u8"},
+            {id:58, title:"Topic Verb Class 43 Video 58", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_21JUNE23.mp4/playlist.m3u8"},
+            {id:59, title:"Topic Verb Class 44 Video 59", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_23JUNE23.mp4/playlist.m3u8"},
+            {id:60, title:"Topic Verb Class 45 Video 60", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_26JUNE23.mp4/playlist.m3u8"},
+            {id:61, title:"Topic Verb Class 46 Video 61", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_28JUNE23.mp4/playlist.m3u8"},
+            {id:62, title:"Topic Verb Class 47 Video 62", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_30JUNE23.mp4/playlist.m3u8"},
+            {id:63, title:"Topic Verb Class 48 Video 63", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_3JULY23.mp4/playlist.m3u8"},
+            {id:64, title:"Topic Verb Class 49 Video 64", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_5JULY23.mp4/playlist.m3u8"},
+            {id:65, title:"Topic Verb Class 50 Video 65", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_7JULY23.mp4/playlist.m3u8"},
+            {id:66, title:"Topic Verb Class 51 Video 66", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_10JULY23.mp4/playlist.m3u8"},
+            {id:67, title:"Topic Verb Class 52 Video 67", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_12JULY23.mp4/playlist.m3u8"},
+            {id:68, title:"Topic Verb Class 53 Video 68", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_14JULY23.mp4/playlist.m3u8"},
+            {id:69, title:"Topic Verb Class 54 Video 69", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_17JULY23.mp4/playlist.m3u8"},
+            {id:70, title:"Topic Verb Class 55 Video 70", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_19JULY23.mp4/playlist.m3u8"},
+            {id:71, title:"Topic Verb Class 56 Video 71", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_21JULY23.mp4/playlist.m3u8"},
+            {id:72, title:"Topic Verb Class 57 Video 72", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_24JULY23.mp4/playlist.m3u8"},
+            {id:73, title:"Topic Verb Class 58 Video 73", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_26JULY23.mp4/playlist.m3u8"},
+            {id:74, title:"Topic Verb Class 59 Video 74", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_28JULY23.mp4/playlist.m3u8"},
+            {id:75, title:"Topic Verb Class 60 Video 75", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_31JULY23.mp4/playlist.m3u8"},
+            {id:76, title:"Topic Verb Class 61 Video 76", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_2AUG23.mp4/playlist.m3u8"},
+            {id:77, title:"Topic Verb Class 62 Video 77", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_4AUG23.mp4/playlist.m3u8"},
+            {id:78, title:"Topic Verb Class 63 Video 78", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_7AUG23.mp4/playlist.m3u8"},
+            {id:79, title:"Topic Verb Class 64 Video 79", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_9AUG23.mp4/playlist.m3u8"},
+            {id:80, title:"Topic Verb Class 65 Video 80", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_11AUG23.mp4/playlist.m3u8"},
+            {id:81, title:"Topic Verb Class 66 Video 81", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_14AUG23.mp4/playlist.m3u8"},
+            {id:82, title:"Topic Verb Class 67 Video 82", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_16AUG23.mp4/playlist.m3u8"},
+            {id:83, title:"Topic Verb Class 68 Video 83", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_18AUG23.mp4/playlist.m3u8"},
+            {id:84, title:"Topic Verb Class 69 Video 84", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_21AUG23.mp4/playlist.m3u8"},
+            {id:85, title:"Topic Verb Class 70 Video 85", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_23AUG23.mp4/playlist.m3u8"},
+            {id:86, title:"Topic Verb Class 71 Video 86", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_25AUG23.mp4/playlist.m3u8"},
+            {id:87, title:"Topic Verb Class 72 Video 87", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_28AUG23.mp4/playlist.m3u8"},
+            {id:88, title:"Topic Verb Class 73 Video 88", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_30AUG23.mp4/playlist.m3u8"},
+            {id:89, title:"Topic Verb Class 74 Video 89", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_1SEP23.mp4/playlist.m3u8"},
+            {id:90, title:"Topic Verb Class 75 Video 90", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_4SEP23.mp4/playlist.m3u8"},
+            {id:91, title:"Topic Verb Class 76 Video 91", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_6SEP23.mp4/playlist.m3u8"},
+            {id:92, title:"Topic Verb Class 77 Video 92", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_8SEP23.mp4/playlist.m3u8"},
+            {id:93, title:"Topic Verb Class 78 Video 93", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_11SEP23.mp4/playlist.m3u8"},
+            {id:94, title:"Topic Verb Class 79 Video 94", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_13SEP23.mp4/playlist.m3u8"},
+            {id:95, title:"Topic Verb Class 80 Video 95", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_15SEP23.mp4/playlist.m3u8"},
+            {id:96, title:"Topic Verb Class 81 Video 96", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_18SEP23.mp4/playlist.m3u8"},
+            {id:97, title:"Topic Verb Class 82 Video 97", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_20SEP23.mp4/playlist.m3u8"},
+            {id:98, title:"Topic Verb Class 83 Video 98", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_22SEP23.mp4/playlist.m3u8"},
+            {id:99, title:"Topic Verb Class 84 Video 99", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_25SEP23.mp4/playlist.m3u8"},
+            {id:100, title:"Topic Verb Class 85 Video 100", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_27SEP23.mp4/playlist.m3u8"},
+            {id:101, title:"Topic Verb Class 86 Video 101", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_29SEP23.mp4/playlist.m3u8"},
+            {id:102, title:"Topic Verb Class 87 Video 102", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_2OCT23.mp4/playlist.m3u8"},
+            {id:103, title:"Topic Verb Class 88 Video 103", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_4OCT23.mp4/playlist.m3u8"},
+            {id:104, title:"Topic Verb Class 89 Video 104", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_6OCT23.mp4/playlist.m3u8"},
+            {id:105, title:"Topic Verb Class 90 Video 105", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_9OCT23.mp4/playlist.m3u8"},
+            {id:106, title:"Topic Verb Class 91 Video 106", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_11OCT23.mp4/playlist.m3u8"},
+            {id:107, title:"Topic Verb Class 92 Video 107", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_13OCT23.mp4/playlist.m3u8"},
+            {id:108, title:"Topic Verb Class 93 Video 108", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_16OCT23.mp4/playlist.m3u8"},
+            {id:109, title:"Topic Verb Class 94 Video 109", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_18OCT23.mp4/playlist.m3u8"},
+            {id:110, title:"Topic Verb Class 95 Video 110", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_20OCT23.mp4/playlist.m3u8"},
+            {id:111, title:"Topic Verb Class 96 Video 111", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_23OCT23.mp4/playlist.m3u8"},
+            {id:112, title:"Topic Verb Class 97 Video 112", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_25OCT23.mp4/playlist.m3u8"},
+            {id:113, title:"Topic Verb Class 98 Video 113", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_27OCT23.mp4/playlist.m3u8"},
+            {id:114, title:"Topic Verb Class 99 Video 114", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_30OCT23.mp4/playlist.m3u8"},
+            {id:115, title:"Topic Verb Class 100 Video 115", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_1NOV23.mp4/playlist.m3u8"},
+            {id:116, title:"Topic Verb Class 101 Video 116", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_3NOV23.mp4/playlist.m3u8"},
+            {id:117, title:"Topic Verb Class 102 Video 117", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_6NOV23.mp4/playlist.m3u8"},
+            {id:118, title:"Topic Verb Class 103 Video 118", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_8NOV23.mp4/playlist.m3u8"},
+            {id:119, title:"Topic Verb Class 104 Video 119", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_10NOV23.mp4/playlist.m3u8"},
+            {id:120, title:"Topic Verb Class 105 Video 120", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_13NOV23.mp4/playlist.m3u8"},
+            {id:121, title:"Topic Verb Class 106 Video 121", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_15NOV23.mp4/playlist.m3u8"},
+            {id:122, title:"Topic Verb Class 107 Video 122", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_17NOV23.mp4/playlist.m3u8"},
+            {id:123, title:"Topic Verb Class 108 Video 123", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_20NOV23.mp4/playlist.m3u8"},
+            {id:124, title:"Topic Verb Class 109 Video 124", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_22NOV23.mp4/playlist.m3u8"},
+            {id:125, title:"Topic Verb Class 110 Video 125", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_24NOV23.mp4/playlist.m3u8"},
+            {id:126, title:"Topic Verb Class 111 Video 126", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_27NOV23.mp4/playlist.m3u8"},
+            {id:127, title:"Topic Verb Class 112 Video 127", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_29NOV23.mp4/playlist.m3u8"},
+            {id:128, title:"Topic Verb Class 113 Video 128", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_1DEC23.mp4/playlist.m3u8"},
+            {id:129, title:"Topic Verb Class 114 Video 129", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_4DEC23.mp4/playlist.m3u8"},
+            {id:130, title:"Topic Verb Class 115 Video 130", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_6DEC23.mp4/playlist.m3u8"},
+            {id:131, title:"Topic Verb Class 116 Video 131", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_8DEC23.mp4/playlist.m3u8"},
+            {id:132, title:"Topic Verb Class 117 Video 132", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_11DEC23.mp4/playlist.m3u8"},
+            {id:133, title:"Topic Verb Class 118 Video 133", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_13DEC23.mp4/playlist.m3u8"},
+            {id:134, title:"Topic Verb Class 119 Video 134", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_15DEC23.mp4/playlist.m3u8"},
+            {id:135, title:"Topic Verb Class 120 Video 135", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_18DEC23.mp4/playlist.m3u8"},
+            {id:136, title:"Topic Verb Class 121 Video 136", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_20DEC23.mp4/playlist.m3u8"},
+            {id:137, title:"Topic Verb Class 122 Video 137", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_22DEC23.mp4/playlist.m3u8"},
+            {id:138, title:"Topic Verb Class 123 Video 138", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_25DEC23.mp4/playlist.m3u8"},
+            {id:139, title:"Topic Verb Class 124 Video 139", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_27DEC23.mp4/playlist.m3u8"},
+            {id:140, title:"Topic Verb Class 125 Video 140", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_29DEC23.mp4/playlist.m3u8"},
+            {id:141, title:"Topic Verb Class 126 Video 141", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_1JAN24.mp4/playlist.m3u8"},
+            {id:142, title:"Topic Verb Class 127 Video 142", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_3JAN24.mp4/playlist.m3u8"},
+            {id:143, title:"Topic Verb Class 128 Video 143", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_5JAN24.mp4/playlist.m3u8"},
+            {id:144, title:"Topic Verb Class 129 Video 144", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_8JAN24.mp4/playlist.m3u8"},
+            {id:145, title:"Topic Verb Class 130 Video 145", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_10JAN24.mp4/playlist.m3u8"},
+            {id:146, title:"Topic Verb Class 131 Video 146", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_12JAN24.mp4/playlist.m3u8"},
+            {id:147, title:"Topic Verb Class 132 Video 147", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_15JAN24.mp4/playlist.m3u8"},
+            {id:148, title:"Topic Verb Class 133 Video 148", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_17JAN24.mp4/playlist.m3u8"},
+            {id:149, title:"Topic Verb Class 134 Video 149", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_19JAN24.mp4/playlist.m3u8"},
+            {id:150, title:"Topic Verb Class 135 Video 150", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_22JAN24.mp4/playlist.m3u8"},
+            {id:151, title:"Topic Verb Class 136 Video 151", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_24JAN24.mp4/playlist.m3u8"},
+            {id:152, title:"Topic Verb Class 137 Video 152", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_26JAN24.mp4/playlist.m3u8"},
+            {id:153, title:"Topic Verb Class 138 Video 153", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_29JAN24.mp4/playlist.m3u8"},
+            {id:154, title:"Topic Verb Class 139 Video 154", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_31JAN24.mp4/playlist.m3u8"},
+            {id:155, title:"Topic Verb Class 140 Video 155", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_2FEB24.mp4/playlist.m3u8"},
+            {id:156, title:"Topic Verb Class 141 Video 156", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_5FEB24.mp4/playlist.m3u8"},
+            {id:157, title:"Topic Verb Class 142 Video 157", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_7FEB24.mp4/playlist.m3u8"},
+            {id:158, title:"Topic Verb Class 143 Video 158", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_36_NS_ENG_P1_9FEB24.mp4/playlist.m3u8"}
+        ];
+
+        let hls = null;
+        let currentId = null;
+
+        // Render video list
+        function renderList(list) {
+            const container = document.getElementById('videoList');
+            let html = '';
+            for (let i = 0; i < list.length; i++) {
+                const v = list[i];
+                const active = v.id === currentId ? 'active' : '';
+                html += '<div class="video-item ' + active + '" onclick="play(' + v.id + ')">' +
+                    '<div class="v-num">' + v.id + '</div>' +
+                    '<div class="v-title">' + v.title + '</div>' +
+                    '<div class="v-play">▶</div>' +
+                    '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // Initial render
+        renderList(videoData);
+
+        // Search function
+        function doSearch() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = videoData.filter(function(v) {
+                return v.title.toLowerCase().indexOf(q) !== -1;
+            });
+            renderList(filtered);
+        }
+
+        // Play video
+        function play(id) {
+            const video = videoData.find(function(v) { return v.id === id; });
+            if (!video) return;
+
+            currentId = id;
+            renderList(videoData);
+
+            document.getElementById('nowPlaying').innerHTML = 
+                '<h3>🎬 ' + video.title + '</h3>' +
+                '<p>Loading stream...</p>';
+
+            showStatus('Loading HLS stream...', 'load');
+
+            const player = document.getElementById('player');
+
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    debug: false,
+                    enableWorker: true
+                });
+                hls.loadSource(video.url);
+                hls.attachMedia(player);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    player.play();
+                    document.getElementById('nowPlaying').innerHTML = 
+                        '<h3>▶ ' + video.title + '</h3>' +
+                        '<p>Now playing live stream</p>';
+                    showStatus('✅ Stream loaded!', 'ok');
+                });
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        showStatus('❌ Stream error: ' + data.type, 'err');
+                    }
+                });
+            } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                player.src = video.url;
+                player.play();
+            } else {
+                showStatus('❌ HLS not supported in this browser', 'err');
+            }
+        }
+
+        // Stop video
+        function stopVideo() {
+            const player = document.getElementById('player');
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            player.pause();
+            player.src = '';
+            player.load();
+            document.getElementById('nowPlaying').innerHTML = 
+                '<h3>⏹ Stopped</h3>' +
+                '<p>Select a video to play</p>';
+            showStatus('Stream stopped', 'ok');
+        }
+
+        // Fullscreen
+        function fullScreen() {
+            const player = document.getElementById('player');
+            if (player.requestFullscreen) {
+                player.requestFullscreen();
+            } else if (player.webkitRequestFullscreen) {
+                player.webkitRequestFullscreen();
+            }
+        }
+
+        // Show status
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status-msg show ' + type;
+            if (type === 'ok') {
+                setTimeout(function() { el.classList.remove('show'); }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
