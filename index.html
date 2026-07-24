@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AllCompetitionClasses - Grammar Live Player</title>
+    <title>AllCompetitionClasses - Grammar Player + Downloader</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,21 +25,10 @@
             z-index: 100;
         }
 
-        .header h1 {
-            font-size: 1.3rem;
-            color: #e94560;
-        }
+        .header h1 { font-size: 1.3rem; color: #e94560; }
+        .header p { font-size: 0.75rem; color: #888; margin-top: 3px; }
 
-        .header p {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 3px;
-        }
-
-        .container {
-            padding: 10px;
-            max-width: 100%;
-        }
+        .container { padding: 10px; max-width: 100%; }
 
         /* Video Player */
         .player-box {
@@ -73,16 +62,8 @@
             border-left: 3px solid #e94560;
         }
 
-        .now-playing h3 {
-            font-size: 0.9rem;
-            color: #fff;
-        }
-
-        .now-playing p {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 3px;
-        }
+        .now-playing h3 { font-size: 0.9rem; color: #fff; }
+        .now-playing p { font-size: 0.75rem; color: #888; margin-top: 3px; }
 
         .controls {
             display: flex;
@@ -101,16 +82,10 @@
             text-align: center;
         }
 
-        .btn-red {
-            background: #e94560;
-            color: white;
-        }
-
-        .btn-dark {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
+        .btn-red { background: #e94560; color: white; }
+        .btn-dark { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-green { background: #22c55e; color: white; }
+        .btn-blue { background: #3b82f6; color: white; }
 
         /* Playlist */
         .playlist-box {
@@ -127,10 +102,7 @@
             margin-bottom: 10px;
         }
 
-        .playlist-header h2 {
-            font-size: 0.9rem;
-            color: #e94560;
-        }
+        .playlist-header h2 { font-size: 0.9rem; color: #e94560; }
 
         .search-box {
             width: 100%;
@@ -144,25 +116,19 @@
         }
 
         .video-list {
-            max-height: 50vh;
+            max-height: 55vh;
             overflow-y: auto;
         }
 
         .video-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             padding: 10px;
             margin-bottom: 6px;
             background: rgba(255,255,255,0.05);
             border-radius: 8px;
-            cursor: pointer;
             border: 1px solid transparent;
-        }
-
-        .video-item:active {
-            background: rgba(233, 69, 96, 0.2);
-            border-color: #e94560;
         }
 
         .video-item.active {
@@ -171,14 +137,14 @@
         }
 
         .v-num {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             background: rgba(233, 69, 96, 0.3);
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: bold;
             color: #e94560;
             flex-shrink: 0;
@@ -186,24 +152,32 @@
 
         .v-title {
             flex: 1;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #fff;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .v-play {
-            width: 24px;
-            height: 24px;
-            background: rgba(233, 69, 96, 0.2);
-            border-radius: 50%;
+        .v-btns {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6rem;
+            gap: 5px;
             flex-shrink: 0;
         }
+
+        .v-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+        }
+
+        .v-btn-play { background: #e94560; }
+        .v-btn-dl { background: #22c55e; }
+        .v-btn-dl:hover { background: #16a34a; }
 
         .status-msg {
             margin-top: 8px;
@@ -217,12 +191,52 @@
         .status-msg.ok { background: rgba(0,255,0,0.1); color: #4ade80; }
         .status-msg.err { background: rgba(255,0,0,0.1); color: #f87171; }
         .status-msg.load { background: rgba(255,193,7,0.1); color: #fbbf24; }
+        .status-msg.info { background: rgba(59,130,246,0.1); color: #60a5fa; }
+
+        /* Download progress overlay */
+        .dl-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .dl-overlay.show { display: flex; }
+
+        .dl-box {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #22c55e;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .dl-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(34,197,94,0.2);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .dl-title { font-size: 1.1rem; color: #22c55e; margin-bottom: 10px; }
+        .dl-text { font-size: 0.8rem; color: #aaa; }
+        .dl-filename { font-size: 0.75rem; color: #888; margin-top: 5px; word-break: break-all; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📚 AllCompetitionClasses</h1>
-        <p>Grammar Course - 158 Videos | Live Streaming</p>
+        <p>Grammar Course - 158 Videos | Play Live or Download</p>
     </div>
 
     <div class="container">
@@ -232,8 +246,8 @@
                 <video id="player" controls playsinline></video>
             </div>
             <div class="now-playing" id="nowPlaying">
-                <h3>🎬 Select a video to play</h3>
-                <p>Tap any video from the list below</p>
+                <h3>🎬 Select a video to play or download</h3>
+                <p>Tap ▶ to stream live | Tap ⬇ to download</p>
             </div>
             <div class="controls">
                 <button class="btn btn-red" onclick="stopVideo()">⏹ Stop</button>
@@ -245,25 +259,35 @@
         <!-- Playlist -->
         <div class="playlist-box">
             <div class="playlist-header">
-                <h2>📋 Video Playlist (158)</h2>
+                <h2>📋 Video Playlist (158) - Play ▶ or Download ⬇</h2>
                 <input type="text" class="search-box" id="searchInput" 
                        placeholder="🔍 Search video..." onkeyup="doSearch()">
             </div>
             <div class="video-list" id="videoList">
-                <!-- Videos inserted here -->
+                <!-- Videos -->
             </div>
         </div>
     </div>
 
+    <!-- Download Overlay -->
+    <div class="dl-overlay" id="dlOverlay">
+        <div class="dl-box">
+            <div class="dl-spinner"></div>
+            <div class="dl-title">⬇ Downloading Video...</div>
+            <div class="dl-text">Please wait, this may take a few minutes</div>
+            <div class="dl-filename" id="dlFilename"></div>
+        </div>
+    </div>
+
     <script>
-        // Video data - all 158 grammar videos
+        // All 158 videos with stream URLs
         const videoData = [
             {id:1, title:"Syllabus Discussion Video 1", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_40_NS_ENG_P1_9JUNE23.mp4/playlist.m3u8"},
-            {id:2, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 01 Video 2", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_13JULY23.mp4/playlist.m3u8"},
-            {id:3, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 02 Video 3", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_15JULY23.mp4/playlist.m3u8"},
-            {id:4, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 03 Part 1 Video 4", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_18JULY23.mp4/playlist.m3u8"},
-            {id:5, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 03 Part 2 Video 5", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_18JULY23.mp4/playlist.m3u8"},
-            {id:6, title:"Basic Concept Of Ssc Poparts Of Speech For Cds Class 04 Video 6", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_20JULY23.mp4/playlist.m3u8"},
+            {id:2, title:"Basic Concept SSC Parts Of Speech CDS Class 01 Video 2", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_13JULY23.mp4/playlist.m3u8"},
+            {id:3, title:"Basic Concept SSC Parts Of Speech CDS Class 02 Video 3", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_15JULY23.mp4/playlist.m3u8"},
+            {id:4, title:"Basic Concept SSC Parts Of Speech CDS Class 03 Part 1 Video 4", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_18JULY23.mp4/playlist.m3u8"},
+            {id:5, title:"Basic Concept SSC Parts Of Speech CDS Class 03 Part 2 Video 5", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_18JULY23.mp4/playlist.m3u8"},
+            {id:6, title:"Basic Concept SSC Parts Of Speech CDS Class 04 Video 6", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_20JULY23.mp4/playlist.m3u8"},
             {id:7, title:"Topic Noun Class 05 Part 01 Video 7", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_22JULY23.mp4/playlist.m3u8"},
             {id:8, title:"Topic Noun Class 05 Part 02 Video 8", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P2_22JULY23.mp4/playlist.m3u8"},
             {id:9, title:"Topic Noun Class 06 Video 9", url:"https://689dfa6beb89c.streamlock.net/kdlivevod/mp4:KD_ENG_43_NS_ENG_P1_25JULY23.mp4/playlist.m3u8"},
@@ -428,10 +452,13 @@
             for (let i = 0; i < list.length; i++) {
                 const v = list[i];
                 const active = v.id === currentId ? 'active' : '';
-                html += '<div class="video-item ' + active + '" onclick="play(' + v.id + ')">' +
+                html += '<div class="video-item ' + active + '">' +
                     '<div class="v-num">' + v.id + '</div>' +
                     '<div class="v-title">' + v.title + '</div>' +
-                    '<div class="v-play">▶</div>' +
+                    '<div class="v-btns">' +
+                    '<button class="v-btn v-btn-play" onclick="play(' + v.id + ')">▶</button>' +
+                    '<button class="v-btn v-btn-dl" onclick="downloadVideo(' + v.id + ')">⬇</button>' +
+                    '</div>' +
                     '</div>';
             }
             container.innerHTML = html;
@@ -440,7 +467,7 @@
         // Initial render
         renderList(videoData);
 
-        // Search function
+        // Search
         function doSearch() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             const filtered = videoData.filter(function(v) {
@@ -465,16 +492,10 @@
 
             const player = document.getElementById('player');
 
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
+            if (hls) { hls.destroy(); hls = null; }
 
             if (Hls.isSupported()) {
-                hls = new Hls({
-                    debug: false,
-                    enableWorker: true
-                });
+                hls = new Hls({ debug: false, enableWorker: true });
                 hls.loadSource(video.url);
                 hls.attachMedia(player);
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -484,43 +505,171 @@
                         '<p>Now playing live stream</p>';
                     showStatus('✅ Stream loaded!', 'ok');
                 });
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        showStatus('❌ Stream error: ' + data.type, 'err');
-                    }
-                });
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
                 player.src = video.url;
                 player.play();
             } else {
-                showStatus('❌ HLS not supported in this browser', 'err');
+                showStatus('❌ HLS not supported', 'err');
             }
+        }
+
+        // Download video - creates a Python script and opens it in Pydroid 3
+        function downloadVideo(id) {
+            const video = videoData.find(function(v) { return v.id === id; });
+            if (!video) return;
+
+            // Show download overlay
+            document.getElementById('dlFilename').textContent = video.title;
+            document.getElementById('dlOverlay').classList.add('show');
+
+            // Create Python script content for this specific video
+            const pyScript = generatePythonScript(video);
+
+            // Create a blob and download the Python script
+            const blob = new Blob([pyScript], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'download_video_' + id + '.py';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Hide overlay after a moment
+            setTimeout(function() {
+                document.getElementById('dlOverlay').classList.remove('show');
+                showStatus('📥 Python script downloaded! Open in Pydroid 3 to download video.', 'info');
+            }, 2000);
+        }
+
+        // Generate Python download script for a video
+        function generatePythonScript(video) {
+            const baseUrl = video.url.replace('/playlist.m3u8', '');
+            return `#!/usr/bin/env python3
+"""
+Video Downloader - AllCompetitionClasses
+Video: ${video.title}
+Auto-generated download script
+
+Usage:
+    python download_video_${video.id}.py
+"""
+
+import requests
+import re
+import os
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+BASE_URL = "${baseUrl}"
+OUTPUT_TS = "video_${video.id}_${video.title.replace(/[^a-zA-Z0-9]/g, '_')}.ts"
+OUTPUT_MP4 = OUTPUT_TS.replace('.ts', '.mp4')
+MAX_WORKERS = 8
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Referer": "https://www.allcompetitionclasses.co.in/",
+}
+
+def get_master_playlist():
+    master_url = BASE_URL + "/playlist.m3u8"
+    print("[1/4] Fetching playlist...")
+    r = requests.get(master_url, headers=HEADERS, timeout=15)
+    r.raise_for_status()
+    match = re.search(r'chunklist_[^\s]+', r.text)
+    if not match:
+        raise ValueError("Chunklist not found")
+    return BASE_URL + "/" + match.group(0)
+
+def get_segments(chunklist_url):
+    print("[2/4] Getting segments...")
+    r = requests.get(chunklist_url, headers=HEADERS, timeout=15)
+    segments = re.findall(r'media_[^\s]+', r.text)
+    print(f"      Found {len(segments)} segments")
+    return segments
+
+def download_segment(args):
+    seg, idx, total = args
+    try:
+        r = requests.get(BASE_URL + "/" + seg, headers=HEADERS, timeout=30)
+        return (idx, r.content, None)
+    except Exception as e:
+        return (idx, None, str(e))
+
+def download_all(segments):
+    total = len(segments)
+    print(f"[3/4] Downloading {total} segments...")
+    data = [None] * total
+    completed = 0
+    failed = 0
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+        futures = {ex.submit(download_segment, (seg, i, total)): i for i, seg in enumerate(segments)}
+        for future in as_completed(futures):
+            idx, content, err = future.result()
+            if content: data[idx] = content; completed += 1
+            else: failed += 1
+            progress = (completed + failed) / total * 100
+            sys.stdout.write(f"\r      {completed+failed}/{total} ({progress:.0f}%) OK:{completed} Fail:{failed}")
+            sys.stdout.flush()
+    print(f"\n      Done: {completed} OK, {failed} failed")
+    return data
+
+def merge(data, path):
+    print(f"[4/4] Saving to {path}...")
+    with open(path, "wb") as f:
+        for d in data:
+            if d: f.write(d)
+    size = os.path.getsize(path) / (1024*1024)
+    print(f"      Saved: {path} ({size:.1f} MB)")
+
+def convert(ts_path, mp4_path):
+    if os.system("ffmpeg -version > /dev/null 2>&1") == 0:
+        print("Converting to MP4...")
+        os.system(f'ffmpeg -y -i "{ts_path}" -c copy "{mp4_path}"')
+        print(f"MP4 saved: {mp4_path}")
+        return True
+    else:
+        print(f"ffmpeg not found. TS file ready: {ts_path}")
+        return False
+
+def main():
+    print("="*50)
+    print("  Video Downloader - ${video.title}")
+    print("="*50)
+    try:
+        chunklist = get_master_playlist()
+        segments = get_segments(chunklist)
+        data = download_all(segments)
+        merge(data, OUTPUT_TS)
+        convert(OUTPUT_TS, OUTPUT_MP4)
+        print("\n✅ DONE!")
+    except Exception as e:
+        print(f"\n❌ ERROR: {e}")
+        import traceback; traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
+`;
         }
 
         // Stop video
         function stopVideo() {
             const player = document.getElementById('player');
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-            player.pause();
-            player.src = '';
-            player.load();
+            if (hls) { hls.destroy(); hls = null; }
+            player.pause(); player.src = ''; player.load();
             document.getElementById('nowPlaying').innerHTML = 
-                '<h3>⏹ Stopped</h3>' +
-                '<p>Select a video to play</p>';
+                '<h3>⏹ Stopped</h3><p>Select a video to play or download</p>';
             showStatus('Stream stopped', 'ok');
         }
 
         // Fullscreen
         function fullScreen() {
             const player = document.getElementById('player');
-            if (player.requestFullscreen) {
-                player.requestFullscreen();
-            } else if (player.webkitRequestFullscreen) {
-                player.webkitRequestFullscreen();
-            }
+            if (player.requestFullscreen) player.requestFullscreen();
+            else if (player.webkitRequestFullscreen) player.webkitRequestFullscreen();
         }
 
         // Show status
@@ -528,9 +677,7 @@
             const el = document.getElementById('status');
             el.textContent = msg;
             el.className = 'status-msg show ' + type;
-            if (type === 'ok') {
-                setTimeout(function() { el.classList.remove('show'); }, 3000);
-            }
+            if (type === 'ok') setTimeout(function() { el.classList.remove('show'); }, 4000);
         }
     </script>
 </body>
